@@ -72,7 +72,7 @@ async def systemone(req: Request):
         raise HTTPException(status_code=400, detail="bad json")
     state = body.get("state", "")
     questions = body.get("questions", {})
-    web_augment_flag = body.get("web_augment", False)
+    web_augment_flag = body.get("web_augment", True)
     web_sources = []
     if isinstance(state, dict) or isinstance(state, list):
         state_str = json.dumps(state)
