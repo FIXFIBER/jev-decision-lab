@@ -7,8 +7,10 @@ Type=simple
 WorkingDirectory=/home/darkaxis/jev-decision-lab
 Environment=ANYJEV_GGUF=/var/lib/ollama/.ollama/models/blobs/sha256-cc23113431ecc14fc31b0ae7a85ce70a9476fbee8bc11f90099876d7283b3ddf
 ExecStart=/home/darkaxis/anyjev-test/bin/python /home/darkaxis/jev-decision-lab/adapter.py
-Restart=on-failure
-RestartSec=10
+Restart=always
+RestartSec=15
+TimeoutStartSec=120
+TimeoutStopSec=30
 StandardOutput=append:/tmp/anyjev_adapter.log
 StandardError=append:/tmp/anyjev_adapter.log
 
