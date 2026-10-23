@@ -46,7 +46,7 @@ async def startup():
                 pass
     if not gguf_path:
         gguf_path = "/tmp/llama32-3b.gguf"
-    backend = LlamaCppBackend(gguf_path, n_ctx=2048, n_batch=512, n_gpu_layers=0)
+    backend = LlamaCppBackend(gguf_path, n_ctx=1024, n_batch=256, n_gpu_layers=0)
     decider = Decider(backend, level="L0")
     print(f"Loaded: {backend.name}", flush=True)
 

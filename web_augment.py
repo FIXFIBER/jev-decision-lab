@@ -14,8 +14,8 @@ from typing import Any
 
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
 TIMEOUT = 15
-MAX_TEXT_PER_PAGE = 800
-MAX_TOTAL_CHARS = 1200
+MAX_TEXT_PER_PAGE = 300
+MAX_TOTAL_CHARS = 400
 
 
 class _TextExtractor(HTMLParser):
@@ -112,7 +112,7 @@ def _extract_keywords(text: str, max_words: int = 8) -> str:
     return " ".join(uniq[:max_words])
 
 
-def augment_state(state: Any, questions: dict, max_results: int = 3) -> tuple[str, list[dict]]:
+def augment_state(state: Any, questions: dict, max_results: int = 2) -> tuple[str, list[dict]]:
     """Fetch web data and build an augmented state string.
 
     Returns (augmented_state_text, sources_list).
