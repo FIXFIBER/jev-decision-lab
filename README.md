@@ -31,6 +31,30 @@ The adapter auto-detects a GGUF model in this order:
 
 If you use ollama, pull any model first (`ollama pull ...`) and setup.sh will find it.
 
+## Web augmentation (live internet data)
+
+By default, AnyJev decides based on its training data + the state you give it.
+Enable `web_augment` to ground decisions in live web data:
+
+```json
+{
+  "state": "Customer says product keeps crashing and wants a refund",
+  "questions": { ... },
+  "web_augment": true
+}
+```
+
+When enabled, the adapter:
+1. Extracts keywords from the state + question instructions
+2. Searches DuckDuckGo (free, no API key)
+3. Fetches and extracts text from top results
+4. Injects the web context into the state before calling AnyJev
+5. Returns the decision + `web_sources` list
+
+The decision is now grounded in current, real-world information instead of
+just training data. No code changes needed on the client side — just set
+`web_augment: true` in the request.
+
 ## Auto-start on reboot
 
 ```bash
