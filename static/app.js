@@ -2839,6 +2839,14 @@ function renderResponse(body, questions, providerId) {
   const expand = distributionPreference ?? entries.length <= 2;
   els.resultCards.classList.toggle("dense-results", entries.length >= 3);
   entries.forEach(([id, answer]) => els.resultCards.appendChild(buildResultCard(id, answer, questions?.[id] || {}, expand, providerId)));
+  // Show web search sources if available
+  const webSources = body?.upstream_response?.web_sources || body?.result?.web_sources || body?.web_sources;
+  if (webSources && webSources.length) {
+    const sourcesCard = document.createElement("div");
+    sourcesCard.className = "result-card web-sources-card";
+    sourcesCard.innerHTML = `<div class="result-card-head"><strong>Web sources used</strong><span class="tag">${webSources.length} sources</span></div><ul class="web-sources-list">${webSources.map(s => `<li><a href="${s.url}" target="_blank" rel="noopener">${s.title}</a><span class="web-source-snippet">${s.snippet || ''}</span></li>`).join("")}</ul>`;
+    els.resultCards.appendChild(sourcesCard);
+  }
   refreshExpandControl();
   if (!entries.length) els.resultCards.innerHTML = `<div class="empty-state compact"><p>No <code>answers</code> object was returned. Check Raw JSON.</p></div>`;
   els.resultCards.classList.remove("results-updated");

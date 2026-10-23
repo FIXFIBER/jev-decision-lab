@@ -3323,3 +3323,11 @@ html[data-theme="light"] .python-example pre { color: #35495b; background: #fbfd
   .input-panel .run-feedback { grid-column: 1; grid-row: 1; grid-template-rows: 21px 24px 17px; }
 .input-panel .run-actions { grid-column: 1; grid-row: 2; grid-template-columns: minmax(0,150px) minmax(0,178px); }
 }
+
+/* Web sources card */
+.web-sources-card { border-left: 3px solid var(--accent, #4ade80); }
+.web-sources-list { list-style: none; padding: 0; margin: 8px 0 0; }
+.web-sources-list li { margin-bottom: 8px; padding: 6px 8px; background: rgba(255,255,255,0.04); border-radius: 4px; }
+.web-sources-list a { color: var(--accent, #4ade80); text-decoration: none; font-weight: 500; }
+.web-sources-list a:hover { text-decoration: underline; }
+.web-source-snippet { display: block; font-size: 0.85em; color: var(--muted, #888); margin-top: 2px; }

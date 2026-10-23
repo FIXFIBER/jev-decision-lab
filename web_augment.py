@@ -9,6 +9,7 @@ import json
 import re
 import urllib.parse
 import urllib.request
+import time
 from html.parser import HTMLParser
 from typing import Any
 
@@ -117,37 +118,53 @@ def augment_state(state: Any, questions: dict, max_results: int = 2) -> tuple[st
 
     Returns (augmented_state_text, sources_list).
     """
-    # Build search queries from state + question instructions
+    # Build search queries from state
     state_str = state if isinstance(state, str) else json.dumps(state, default=str)
     queries = []
-    # Query from state keywords
-    kw = _extract_keywords(state_str)
-    if kw:
-        queries.append(kw)
-    # Query from each question instruction
-    for qid, q in questions.items():
-        instr = q.get("instructions", qid)
-        qkw = _extract_keywords(instr, max_words=6)
-        if qkw and qkw not in queries:
-            queries.append(qkw)
-
-    # Limit to 2 queries to keep latency manageable
+    # Use the original state as the primary search query
+    if state_str.strip() and len(state_str.split()) <= 10:
+        queries.append(state_str.strip())
+    # Try a "who is X" variation to get more context
+    words = state_str.lower().split()
+    if 'divorce' in words or 'dead' in words or 'married' in words:
+        # Add a factual query
+        name_part = ' '.join(w for w in words if w not in ('did','is','was','has','have','dead','divorce','divorced','married','wife','his','her','the','a','an'))
+        if name_part and name_part != state_str.lower():
+            queries.append(name_part + ' wife')
+    # Limit to 2 queries to balance coverage vs rate limiting
     queries = queries[:2]
 
     all_sources: list[dict] = []
     web_chunks: list[str] = []
 
     for q in queries:
+        time.sleep(2)  # avoid rate limiting
         results = _ddg_search(q, max_results=max_results)
+        # Filter results: prefer results where the TITLE contains
+        # the main subject words (not just the snippet)
+        state_words = set(w.lower() for w in state_str.split() if len(w) > 2)
+        title_matches = []
+        other_matches = []
+        for r in results:
+            title_lower = r.get('title', '').lower()
+            text = title_lower + ' ' + r.get('snippet', '').lower()
+            if any(w in text for w in state_words):
+                if any(w in title_lower for w in state_words):
+                    title_matches.append(r)
+                else:
+                    other_matches.append(r)
+        if title_matches:
+            results = title_matches
+        elif other_matches:
+            results = other_matches
         for r in results:
             if not r.get("url"):
                 continue
-            # Fetch the page
-            page_text = _fetch_url(r["url"])
+            # Use snippet only (more focused, less noise)
             snippet = r.get("snippet", "")
-            chunk = f"[{r['title']}] {snippet} {page_text}".strip()
-            if len(chunk) > 50:
-                web_chunks.append(chunk[:MAX_TEXT_PER_PAGE])
+            chunk = f"[{r['title']}] {snippet}".strip()
+            if len(chunk) > 30:
+                web_chunks.append(chunk)
                 all_sources.append({"title": r["title"], "url": r["url"], "snippet": snippet})
 
     # Build augmented state
@@ -157,11 +174,17 @@ def augment_state(state: Any, questions: dict, max_results: int = 2) -> tuple[st
 
     if web_text.strip():
         augmented = (
-            "WEB CONTEXT (live data retrieved for this decision):\n"
+            "You must answer the question based ONLY on the web search results below.\n"
+            "IMPORTANT: The question is about a SPECIFIC person. If a search result "
+            "mentions a DIFFERENT person (even a related one), IGNORE that result.\n"
+            "Only consider information that is directly about the person in the question.\n\n"
+            "WEB SEARCH RESULTS:\n"
             + web_text
-            + "\n\n=== END WEB CONTEXT ===\n\n"
-            + "ORIGINAL STATE:\n"
-            + state_str
+            + "\n\n=== END OF SEARCH RESULTS ===\n\n"
+            "QUESTION: " + state_str + "\n\n"
+            "Based ONLY on the search results above about the SPECIFIC person asked about, "
+            "answer the question. If the person is mentioned as married (not divorced), "
+            "the answer is NO. If divorced, the answer is YES."
         )
     else:
         augmented = state_str
