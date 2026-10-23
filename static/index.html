@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="decision-lab-version" content="__APP_VERSION__" />
+  <title>Decision Lab · Playground</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+  <link rel="stylesheet" href="/static/styles.css?v=__ASSET_VERSION__" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" id="brandMark"><img src="/static/logo.svg" alt="" width="43" height="43" /></div>
+        <div class="brand-copy">
+          <h1>Decision Lab</h1>
+          <p id="brandSubtitle">System One playground</p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="model-targets">
+          <div class="model-select-wrap">
+            <span class="model-dot" id="activeModelDot"></span>
+            <select id="modelSelect" aria-label="Active model">
+              <option value="">No models configured</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="status-strip" id="statusStrip">
+          <span class="status-pill status-ready"><i id="readyDot" class="dot pending"></i><b id="readyText">Configure a model</b></span>
+          <span class="status-pill"><span class="muted">Calls</span><b id="predictionCount">0</b></span>
+          <span class="status-pill"><span class="muted">Tokens</span><b id="tokenCount">—</b></span>
+          <span class="status-pill"><span class="muted">Cost</span><b id="costTotal">—</b></span>
+          <span class="status-pill"><span class="muted">Avg</span><b id="averageLatency">—</b></span>
+        </div>
+
+        <div class="topbar-actions" aria-label="Appearance and settings">
+          <button id="themeToggleBtn" class="top-icon-btn" type="button" title="Switch to light mode" aria-label="Switch color theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.1 15.7A8.6 8.6 0 0 1 8.3 3.9 8.6 8.6 0 1 0 20.1 15.7Z"/></svg></button>
+          <button id="modelSettingsBtn" class="top-icon-btn" type="button" title="Settings" aria-label="Open settings"><span aria-hidden="true">⚙</span></button>
+        </div>
+      </div>
+    </header>
+
+    <main class="playground">
+      <section class="workspace-panel input-panel">
+        <div class="panel-toolbar">
+          <div>
+            <span class="eyebrow">Experiment</span>
+            <h2>State & decisions</h2>
+          </div>
+          <div class="toolbar-actions">
+            <div class="preset-wrap">
+              <label for="presetSelect">Presets</label>
+              <select id="presetSelect" aria-label="Choose a preset">
+                <option value="">Choose a preset…</option>
+                <optgroup id="customPresetsGroup" label="My presets"></optgroup>
+                <optgroup label="Customer & operations">
+                  <option value="support-triage">Customer support triage</option>
+                  <option value="refund-exception">Refund exception review</option>
+                  <option value="churn-retention">Churn & retention</option>
+                  <option value="product-feedback">Product feedback triage</option>
+                  <option value="shipment-exception">Shipment exception</option>
+                  <option value="invoice-exception">Invoice exception</option>
+                </optgroup>
+                <optgroup label="Security & trust">
+                  <option value="security-alert">Security alert triage</option>
+                  <option value="fraud-review">Fraud transaction review</option>
+                  <option value="phishing-email">Phishing / email safety</option>
+                  <option value="account-takeover">Account takeover signals</option>
+                  <option value="content-moderation">Content moderation</option>
+                </optgroup>
+                <optgroup label="Engineering & AI">
+                  <option value="ai-task-routing">AI task routing</option>
+                  <option value="release-gate">Release readiness gate</option>
+                  <option value="bug-triage">Software bug triage</option>
+                  <option value="code-change-risk">Code-change risk</option>
+                  <option value="data-pipeline">Data pipeline incident</option>
+                  <option value="observability-alert">Production alert triage</option>
+                </optgroup>
+                <optgroup label="General workflows">
+                  <option value="document-routing">Document / inbox routing</option>
+                  <option value="lead-intent">Inbound lead intent</option>
+                  <option value="task-priority">Project / task priority</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="preset-actions">
+              <button id="savePresetBtn" class="btn subtle save-preset-btn" type="button" title="Save the current experiment as a preset">☆ Save</button>
+              <button id="deletePresetBtn" class="btn subtle delete-preset-btn" type="button" title="Delete the selected saved preset" disabled>Delete</button>
+            </div>
+            <div class="share-actions"><button id="importExperimentBtn" class="btn subtle" type="button">Import</button><button id="exportExperimentBtn" class="btn subtle" type="button">Export</button><input id="importExperimentFile" type="file" accept="application/json,.json" hidden /></div>
+            <button id="newBlankBtn" class="btn subtle new-experiment-btn" type="button" title="Start a fresh experiment"><span aria-hidden="true">＋</span> New</button>
+          </div>
+        </div>
+
+        <div class="editor-tabs" role="tablist" aria-label="Experiment editor views">
+          <button id="formEditorTab" class="editor-tab active" type="button" role="tab" data-editor-tab="form" aria-selected="true" aria-controls="formEditorView">Form</button>
+          <button id="jsonEditorTab" class="editor-tab" type="button" role="tab" data-editor-tab="json" aria-selected="false" aria-controls="jsonEditorView" tabindex="-1">JSON</button>
+        </div>
+        <div class="input-scroll" tabindex="0" aria-label="Experiment editor">
+          <div id="formEditorView" class="editor-view active" role="tabpanel" aria-labelledby="formEditorTab">
+          <section class="input-block">
+            <div class="input-block-head">
+              <label class="field-label" for="stateInput">State <span class="optional-label">optional</span></label>
+              <div class="input-mode-switch" role="group" aria-label="State input mode">
+                <button type="button" class="active" data-input-mode="text">Text</button>
+                <button type="button" data-input-mode="fields">Fields</button>
+                <button type="button" data-input-mode="json">JSON</button>
+              </div>
+            </div>
+
+            <div id="textInputMode" class="state-mode active">
+              <textarea id="stateInput" class="state-input" spellcheck="false" placeholder="Paste the text, message, event, incident, customer request, or situation you want the model to evaluate..."></textarea>
+              <p id="inputExample" class="input-example">Example: “Our production checkout has been down for two hours and customers cannot complete purchases.”</p>
+              <p class="field-help">Add context if the decision needs it. Leave State empty to test a self-contained question.</p>
+            </div>
+
+            <div id="fieldsInputMode" class="state-mode">
+              <div class="fields-mode-help">
+                <span>Build a structured object with simple key/value fields.</span>
+                <button id="addStateFieldBtn" class="btn btn-small subtle" type="button">＋ Add field</button>
+              </div>
+              <div class="state-field-columns" aria-hidden="true"><span>Field name</span><span>Value</span><span></span></div>
+              <div id="stateFields" class="state-fields"></div>
+              <p class="field-help">Each row becomes one object field. Blank fields make an empty state object.</p>
+            </div>
+
+            <div id="jsonInputMode" class="state-mode">
+              <textarea id="jsonStateInput" class="state-input code-input" spellcheck="false" placeholder='{"message":"Customer was charged twice","plan":"Enterprise"}'></textarea>
+              <p class="field-help">Use JSON for nested objects or arrays. Leave this blank for an empty text state.</p>
+            </div>
+          </section>
+
+          <section class="builder-section">
+            <div class="builder-heading">
+              <div><span class="eyebrow">Visual builder</span><h3>Decisions</h3></div>
+              <div class="add-actions" aria-label="Add decision">
+                <button class="btn type-button noul" type="button" data-add-type="noul">＋ Yes / No <span class="decision-count">0</span></button>
+                <button class="btn type-button choice" type="button" data-add-type="choice">＋ Choice <span class="decision-count">0</span></button>
+                <button class="btn type-button score" type="button" data-add-type="score">＋ Score <span class="decision-count">0</span></button>
+              </div>
+            </div>
+
+            <div id="blankBuilder" class="blank-builder">
+              <div class="blank-copy"><strong>Add your first decision</strong><span>Evaluate the same state with one or several typed decisions.</span></div>
+              <div class="starter-grid">
+                <button type="button" class="starter-card noul" data-add-type="noul"><span class="starter-icon">Y/N</span><span><b>Yes / No</b><small>Probability that a proposition is true</small></span></button>
+                <button type="button" class="starter-card choice" data-add-type="choice"><span class="starter-icon">C</span><span><b>Choice</b><small>Select one labeled option</small></span></button>
+                <button type="button" class="starter-card score" data-add-type="score"><span class="starter-icon">S</span><span><b>Score</b><small>Position on an ordered rubric</small></span></button>
+              </div>
+            </div>
+
+            <div id="decisionList" class="decision-list"></div>
+          </section>
+
+          </div>
+          <div id="jsonEditorView" class="editor-view" role="tabpanel" aria-labelledby="jsonEditorTab">
+            <section class="request-json-editor-wrap">
+              <div class="json-editor-toolbar"><span>Bidirectional request JSON</span><span id="requestJsonSyncState" class="json-sync-state">Synced</span></div>
+              <textarea id="requestJsonEditor" class="request-json-editor" data-max-height="560" spellcheck="false" aria-label="Editable full request JSON"></textarea>
+              <p class="field-help">Edit the full request here or use the visual forms. Valid JSON updates State and all Decision cards automatically, and form edits regenerate this JSON.</p>
+            </section>
+          </div>
+        </div>
+
+        <div class="run-dock">
+          <div class="run-actions">
+            <button id="runBtn" class="btn primary run-btn" type="button"><span id="runBtnText">Run model</span><span id="runSpinner" class="spinner hidden"></span></button>
+            <button id="runCompareBtn" class="btn run-both-btn" type="button" title="Run this experiment through the models selected in Settings"><span class="dual-model-icon" aria-hidden="true"><i></i><i></i></span><span id="runCompareBtnText">Run selected models</span></button>
+          </div>
+          <div class="run-feedback">
+            <div class="run-state-line"><span id="runStateBadge" class="run-state ready" aria-live="polite">Ready</span><span id="elapsedTimer" class="elapsed-timer">0.0s</span><span id="runningCount" class="running-count">0 running</span></div>
+            <div id="activeRuns" class="active-runs"></div>
+            <div id="validationMessage" class="validation-message" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace-panel output-panel">
+        <div class="panel-toolbar output-toolbar">
+          <div>
+            <span class="eyebrow">Output</span>
+            <div class="output-heading-line"><h2 id="outputTitle">Results</h2><span id="outputModelBadge" class="model-badge">No model</span></div>
+          </div>
+          <button id="toggleDistributionsBtn" class="btn btn-small subtle distributions-toggle" type="button" disabled>Expand all</button>
+          <div class="timing-strip" aria-label="Request timing">
+            <span class="timing-pill"><small id="inferenceLabel">Request</small><b id="inferenceTiming">—</b></span>
+            <span class="timing-pill"><small>Total</small><b id="totalTiming">—</b></span>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Output views">
+          <button class="tab active" type="button" data-tab="cards">Results</button>
+          <button class="tab" type="button" data-tab="whatif">What-if</button>
+          <button class="tab" type="button" data-tab="compare">Compare</button>
+          <button class="tab" type="button" data-tab="raw">Raw</button>
+          <button class="tab" type="button" data-tab="history">History</button>
+        </div>
+        <div id="callInfoBar" class="call-info-bar hidden" tabindex="0" aria-label="Latest call information"></div>
+
+        <div class="output-scroll" tabindex="0" aria-label="Output content">
+          <div id="cardsTab" class="tab-view active"><div id="emptyResults" class="empty-state"><div class="empty-icon">◇</div><h3>No result yet</h3><p id="emptyResultsCopy">Choose a preset and run a built-in demo. No API key needed. State is optional.</p></div><div id="resultCards" class="result-cards"></div></div>
+          <div id="whatifTab" class="tab-view">
+            <div class="whatif-header"><div><strong>Decision sensitivity</strong><p>1. Run an experiment. 2. Capture its result. 3. Edit any input, or rerun unchanged. Compare what moved.</p></div><div class="whatif-actions"><button id="whatIfBaselineBtn" class="btn subtle" type="button">Capture baseline</button><button id="whatIfRunBtn" class="btn primary" type="button">Run variant</button><button id="whatIfClearBtn" class="btn subtle" type="button">Clear</button></div></div>
+            <div id="whatIfStatus" class="whatif-status" aria-live="polite"></div>
+            <div id="whatIfChanges" class="whatif-changes"></div>
+            <div id="whatIfDiff" class="whatif-diff"></div>
+          </div>
+          <div id="rawTab" class="tab-view raw-tab">
+            <div class="raw-split">
+              <section class="json-card raw-request-pane">
+                <div class="json-card-head"><div><span class="eyebrow">Request</span><strong>Request body</strong></div><button id="copyRawRequestBtn" class="json-copy-btn" type="button" title="Copy request JSON" aria-label="Copy request JSON">⧉</button></div>
+                <pre class="raw-json" tabindex="0"><code id="rawRequestJson" class="json-code">{}</code></pre>
+              </section>
+              <section class="json-card raw-response-pane">
+                <div class="json-card-head"><div><span class="eyebrow">Response</span><strong>Raw server response</strong></div><button id="copyRawResponseBtn" class="json-copy-btn" type="button" title="Copy response JSON" aria-label="Copy response JSON">⧉</button></div>
+                <pre class="raw-json" tabindex="0"><code id="rawResponseJson" class="json-code">{}</code></pre>
+              </section>
+            </div>
+            <div class="python-example-wrap"><details id="pythonExample" class="python-example"><summary>Python request example</summary><p>Uses this model's endpoint and settings. If authentication is enabled, set <code>SYSTEM_ONE_API_KEY</code> in your terminal first.</p><pre tabindex="0"><code id="pythonRequestCode"></code></pre></details><button id="copyPythonBtn" class="json-copy-btn python-copy-btn" type="button" title="Copy Python example" aria-label="Copy Python example">⧉</button></div>
+          </div>
+          <div id="compareTab" class="tab-view"><div id="compareContent" class="compare-content"><div class="empty-state compact"><p>Run selected models to inspect their outputs side by side.</p></div></div></div>
+          <div id="historyTab" class="tab-view"><div class="history-heading"><div><strong>Run history</strong><span id="historyWorkspaceText">Stored in this browser. Rerunning always starts a fresh evaluation.</span></div><button id="clearHistoryBtn" class="btn btn-small subtle" type="button">Clear</button></div><div id="historyList" class="history-list"></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="shareModal" class="mini-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="shareTitle"><section class="mini-modal share-modal"><div class="mini-modal-head"><div><span class="eyebrow">Portable experiment</span><h2 id="shareTitle">Share experiment</h2></div><button id="closeShareBtn" class="icon-btn" type="button" aria-label="Close">×</button></div><p id="shareSummary" class="field-help"></p><label id="includeResultsWrap" class="share-check"><input id="includeResultsCheck" type="checkbox" /> Include current results</label><label id="importConnectionsWrap" class="share-check hidden"><input id="importConnectionsCheck" type="checkbox" /> Add missing model connections without keys</label><div id="shareError" class="share-error" role="alert"></div><div class="mini-modal-actions"><button id="cancelShareBtn" class="btn subtle" type="button">Cancel</button><button id="confirmShareBtn" class="btn primary" type="button">Export JSON</button></div></section></div>
+
+  <div id="modelSettingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modelSettingsTitle">
+    <section class="settings-modal settings-modal-large">
+      <div class="settings-modal-head">
+        <div><span class="eyebrow">Decision Lab</span><h2 id="modelSettingsTitle">Settings</h2><p>Connect models once, choose what to run, and keep the playground focused on experiments.</p></div>
+        <button id="closeModelSettingsBtn" class="icon-btn modal-close" type="button" aria-label="Close settings">×</button>
+      </div>
+
+      <div class="settings-layout">
+        <nav class="settings-tabs" role="tablist" aria-label="Settings sections">
+          <button type="button" class="settings-tab active" data-settings-tab="models"><span class="settings-tab-icon">◫</span><span><b>Models</b><small>Connect endpoints</small></span></button>
+          <button type="button" class="settings-tab" data-settings-tab="runset"><span class="settings-tab-icon">✓</span><span><b>Run set</b><small>Choose models</small></span></button>
+          <button type="button" class="settings-tab" data-settings-tab="usage"><span class="settings-tab-icon">↗</span><span><b>Usage</b><small>Calls & cost</small></span></button>
+          <button type="button" class="settings-tab" data-settings-tab="advanced"><span class="settings-tab-icon">⚙</span><span><b>Advanced</b><small>Protocol details</small></span></button>
+        </nav>
+
+        <div class="settings-body">
+        <section id="settingsModelsTab" class="settings-view active" data-settings-view="models">
+          <div class="settings-addbar">
+            <div>
+              <strong>Add a model</strong>
+              <span>The built-in demos work now. Add a real connection when you're ready.</span>
+            </div>
+            <div class="settings-add-controls">
+              <select id="modelTemplateSelect" aria-label="Model connection template">
+                <option value="jev">TypeSafe Jev</option>
+                <option value="openjev">OpenJEV · Codiv</option>
+                <option value="laya">Local endpoint · Laya preset</option>
+                <option value="custom">Custom endpoint</option>
+              </select>
+              <button id="addModelBtn" class="btn primary" type="button">＋ Add model</button>
+            </div>
+          </div>
+          <div class="settings-security-note compact-note">
+            <strong>Keys stay local</strong>
+            <span>Saved API keys stay in the local gateway's <code>secrets.json</code> (under <code>/data</code> in Docker) with owner-only permissions. They are never returned to browser JavaScript.</span>
+          </div>
+          <div id="modelSettingsList" class="model-settings-list simple-model-list"></div>
+        </section>
+
+        <section id="settingsRunsetTab" class="settings-view" data-settings-view="runset">
+          <div class="settings-section-intro"><h3>Models to run together</h3><p>Choose the models used by <b>Run selected models</b>. This is separate from endpoint configuration.</p></div>
+          <div id="comparisonModelList" class="comparison-model-list"></div>
+        </section>
+
+        <section id="settingsUsageTab" class="settings-view" data-settings-view="usage">
+          <div class="settings-section-intro"><h3>Usage & cost</h3><p>Token counts come from the model endpoint's own <code>usage</code> response. Decision Lab does not guess missing tokens. Cost uses an upstream-reported cost when available, otherwise your configured token rates.</p></div>
+          <div id="usageModelList" class="usage-model-list"></div>
+        </section>
+
+        <section id="settingsAdvancedTab" class="settings-view" data-settings-view="advanced">
+          <div class="settings-section-intro"><h3>Advanced connection settings</h3><p>Most people never need this. Choose a model to inspect or modify its endpoint, auth, model ID, retries, and pricing.</p></div>
+          <div class="advanced-provider-picker"><label>Model<select id="advancedProviderSelect"></select></label></div>
+          <div id="advancedProviderEditor" class="advanced-provider-editor"></div>
+          <div class="settings-contract subtle-contract">
+            <strong>Endpoint contract</strong>
+            <span>Decision Lab sends <code>{ state, questions, model? }</code> and accepts <code>{ answers, usage? }</code> or a Decision Lab wrapper with <code>result.answers</code>.</span>
+          </div>
+        </section>
+        </div>
+      </div>
+
+      <div class="settings-modal-actions sticky-settings-actions">
+        <button id="reloadModelsBtn" class="btn subtle" type="button">Discard changes</button>
+        <div class="settings-actions-right"><button id="saveModelsBtn" class="btn primary" type="button">Save settings</button></div>
+      </div>
+    </section>
+  </div>
+
+
+  <div id="presetSaveModal" class="mini-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="presetSaveTitle">
+    <section class="mini-modal">
+      <div class="mini-modal-head"><div><span class="eyebrow">My presets</span><h2 id="presetSaveTitle">Save current experiment</h2></div><button id="closePresetSaveBtn" class="icon-btn" type="button" aria-label="Close">×</button></div>
+      <label>Preset name<input id="presetNameInput" type="text" maxlength="80" placeholder="e.g. My fraud review" /></label>
+      <div class="mini-modal-actions"><button id="cancelPresetSaveBtn" class="btn subtle" type="button">Cancel</button><button id="confirmPresetSaveBtn" class="btn primary" type="button">Save preset</button></div>
+    </section>
+  </div>
+
+  <template id="decisionTemplate">
+    <article class="decision-card">
+      <div class="decision-topline"><div class="decision-kind"><span class="decision-kind-icon" aria-hidden="true"></span><span class="type-badge"></span><span class="decision-kind-help"></span></div><button class="icon-btn remove-decision" type="button" title="Remove decision" aria-label="Remove decision">×</button></div>
+      <div class="two-col"><label>Decision ID <span class="optional-label">optional</span><input class="decision-id" type="text" /><span class="decision-id-hint">Used to identify this decision in JSON/results.</span></label><label>Type<input class="decision-type" type="text" disabled /></label></div>
+      <label>Question / instruction<textarea class="decision-instructions auto-grow" rows="1" placeholder="What should the model decide about this state?"></textarea></label>
+      <div class="criteria-editor"></div>
+    </article>
+  </template>
+
+  <script src="/static/app.js?v=__ASSET_VERSION__" defer></script>
+</body>
+</html>

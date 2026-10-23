@@ -1,0 +1,4 @@
+# Decision Lab web UI / local gateway only.
+# It deliberately has no Laya, Torch, Transformers, TypeSafe SDK, or provider dependency.
+fastapi==0.116.1
+uvicorn==0.35.0

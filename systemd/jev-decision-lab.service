@@ -1,0 +1,16 @@
+[Unit]
+Description=Jev Decision Lab UI
+After=network.target jev-adapter.service
+Wants=jev-adapter.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/darkaxis/jev-decision-lab
+ExecStart=/home/darkaxis/jev-decision-lab/.venv/bin/python -m uvicorn app:app --host 127.0.0.1 --port 7860
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/tmp/decision_lab.log
+StandardError=append:/tmp/decision_lab.log
+
+[Install]
+WantedBy=default.target

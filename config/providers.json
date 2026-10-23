@@ -1,0 +1,23 @@
+{
+  "anyjev-local": {
+    "id": "anyjev-local",
+    "name": "AnyJev (local GGUF)",
+    "endpoint": "http://127.0.0.1:8100/v1/systemone",
+    "model": "anyjev",
+    "enabled": true,
+    "compare": true,
+    "status_endpoint": "",
+    "models_endpoint": "",
+    "auth_type": "none",
+    "auth_header": "Authorization",
+    "auth_prefix": "Bearer",
+    "timeout_seconds": 300.0,
+    "max_retries": 1,
+    "retry_statuses": [429, 500, 502, 503, 504],
+    "preset": "custom",
+    "input_cost_per_million": 0.0,
+    "output_cost_per_million": 0.0,
+    "pricing_note": "local",
+    "protocol": "system-one-http"
+  }
+}
