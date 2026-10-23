@@ -10,6 +10,13 @@ sys.path.insert(0, '/home/darkaxis/anyjev-test/lib/python3.12/site-packages')
 
 from anyjev import Decider, Question
 from anyjev.backends.llamacpp import LlamaCppBackend
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+try:
+    import web_augment
+    WEB_AUGMENT_AVAILABLE = True
+except Exception:
+    WEB_AUGMENT_AVAILABLE = False
 
 app = FastAPI(title="AnyJev Adapter")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
@@ -65,12 +72,21 @@ async def systemone(req: Request):
         raise HTTPException(status_code=400, detail="bad json")
     state = body.get("state", "")
     questions = body.get("questions", {})
+    web_augment_flag = body.get("web_augment", False)
+    web_sources = []
     if isinstance(state, dict) or isinstance(state, list):
         state_str = json.dumps(state)
     elif state is None:
         state_str = ""
     else:
         state_str = str(state)
+
+    # Web augmentation: fetch live data to ground the decision
+    if web_augment_flag and WEB_AUGMENT_AVAILABLE:
+        try:
+            state_str, web_sources = web_augment.augment_state(state, questions)
+        except Exception as e:
+            print(f"Web augment error: {e}", flush=True)
     
     anyjev_questions = []
     q_mapping = []
@@ -120,7 +136,10 @@ async def systemone(req: Request):
             except:
                 sval = 0
             answers[qid] = {"type": "score", "score": float(sval), "legend": {str(i):o for i,o in enumerate(opts)}, "probabilities": dist, "confidence": float(getattr(d,'confidence',dist.get(winner,0.5)))}
-    return {"model": "anyjev", "answers": answers, "usage": {"input_tokens": 0, "output_tokens": 0}}
+    resp = {"model": "anyjev", "answers": answers, "usage": {"input_tokens": 0, "output_tokens": 0}}
+    if web_sources:
+        resp["web_sources"] = web_sources
+    return resp
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8100)

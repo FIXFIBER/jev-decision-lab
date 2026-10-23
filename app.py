@@ -57,6 +57,7 @@ class ExperimentRequest(BaseModel):
 
     state: Any
     questions: dict[str, dict[str, Any]] = Field(min_length=1)
+    web_augment: bool = False
 
 
 class ProviderPayload(BaseModel):
@@ -911,6 +912,8 @@ async def provider_predict(provider_id: str, payload: ExperimentRequest,
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     body: dict[str, Any] = {"state": payload.state, "questions": payload.questions}
+    if payload.web_augment:
+        body["web_augment"] = True
     if provider.get("model"):
         body["model"] = provider["model"]
 
